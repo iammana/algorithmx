@@ -25,8 +25,23 @@ class column_object:
         self.S = S
         self.N = N
 
+def create_column_object_links(matrix_A, column_object_list):
 
-def create_data_object_links(matrix_A, data_object_list):
+    #Create special column object called root, h
+    previous = root = column_object()
+    column_object_list.append(root)
+
+    #Create L and R links for column objects
+    for column in range(len(matrix_A[0])):
+        current_column = column_object()
+        column_object_list.append(current_column)
+        current_column.L = previous
+        previous.R = current_column
+        previous = current_column
+    current_column.R = root
+    root.L = current_column
+
+def create_data_object_links(matrix_A, data_object_list, column_object_list):
     
     #Populate data_object_list matrix and create L and R links
     for row in range(len(matrix_A)):
@@ -50,27 +65,29 @@ def create_data_object_links(matrix_A, data_object_list):
         previous.R = first
         data_object_list.append(temp_row)
 
-    #Create U and D links within data_object_list matrix
+    #Create U and D links within data_object_list and column_object_list matrices
     for column in range(len(data_object_list[0])):
         first_time_in_column = 1
         for row in range(len(data_object_list)):
             if data_object_list[row][column]:
                 if first_time_in_column:
                     first_time_in_column = 0
-                    current_column = column_object()
-                    data_object_list[row][column].U = current_column
+                    data_object_list[row][column].U = column_object_list[column+1]
+                    column_object_list[column+1].D = data_object_list[row][column]
                     previous = data_object_list[row][column]
                 else:
                     data_object_list[row][column].U = previous
                     previous.D = data_object_list[row][column]
                     previous = data_object_list[row][column]
-        previous.D = current_column
-        current_column.U = previous
+        previous.D = column_object_list[column+1]
+        column_object_list[column+1].U = previous
+
 
 
 def main():
 
     data_object_list = []
+    column_object_list = []
 
     matrix_A = [
         [0,0,1,0,1,1,0],
@@ -81,8 +98,8 @@ def main():
         [0,0,0,1,1,0,1]
     ]
 
-    create_data_object_links(matrix_A, data_object_list)
-    #create_column_object_links()
+    create_column_object_links(matrix_A, column_object_list)
+    create_data_object_links(matrix_A, data_object_list, column_object_list)
 
 if __name__ == "__main__":
     main()
