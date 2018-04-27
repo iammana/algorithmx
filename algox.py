@@ -82,7 +82,22 @@ def create_data_object_links(matrix_A, data_object_list, column_object_list):
         previous.D = column_object_list[column+1]
         column_object_list[column+1].U = previous
 
+def count_ones(matrix_A, column_object_list):
+    for column in range(len(matrix_A[0])):
+        column_count = 0
+        for row in range(len(matrix_A)):
+            if matrix_A[row][column] == 1:
+                column_count += 1
+                column_object_list[column+1].S = column_count
 
+
+def cover_column(selected_column):
+    selected_column.R.L = selected_column.L
+    temp_column = selected_column.D
+    while (temp_column != selected_column):
+        temp_row = temp_column.R
+        while(temp_row != temp_column):
+            None
 
 def main():
 
@@ -100,6 +115,7 @@ def main():
 
     create_column_object_links(matrix_A, column_object_list)
     create_data_object_links(matrix_A, data_object_list, column_object_list)
+    count_ones(matrix_A, column_object_list)
 
 if __name__ == "__main__":
     main()
