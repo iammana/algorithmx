@@ -29,7 +29,7 @@ def create_column_object_links(matrix_A, column_object_list):
     for column in range(len(matrix_A[0])):
         current_column = column_object()
         column_object_list.append(current_column)
-        current_column.N = 'col ' + str(column + 1)
+        current_column.N = column + 1
         current_column.L = previous
         previous.R = current_column
         previous = current_column
@@ -122,31 +122,57 @@ def uncover_column(selected_column):
     selected_column.L.R = selected_column
 
 def search(k, data_object_list, column_object_list, solution_list):
-    selected_column = choose_column(column_object_list)
-    cover_column(selected_column)
-    temp_row = selected_column.D
-    while (temp_row != selected_column):
-        solution_list.append(temp_row)
-        temp_column = temp_row.R
-        while(temp_column != temp_row):
-            cover_column(temp_column.C)
-            temp_column = temp_column.R
-        search(k+1, data_object_list, column_object_list, solution_list)
-        temp_row = solution_list[k]
-        selected_column = temp_row.C
-        temp_column = temp_row.L
-        while(temp_column != temp_row):
-            uncover_column(temp_column)
-            temp_column = temp_column.L
-        temp_row = temp_row.D
-    uncover_column(selected_column)
+
+    if(column_object_list[0].R == column_object_list[0]):
+        temp_solution_row = []
+        solution_matrix = []
+        print('Solution found:')
+        for s in solution_list:
+            if s:
+                temp_column = s.R
+                temp_solution_row.append(s.C.N)
+                while(temp_column != s):
+                    temp_solution_row.append(temp_column.C.N)
+                    temp_column = temp_column.R
+            solution_matrix.append(temp_solution_row)
+            temp_solution_row = []
+
+        for i in range(len(solution_matrix)):
+            count = 0
+            for j in range(len(solution_matrix[i])):
+                count += solution_matrix[i][j]
+            if (count):
+                for z in range(len(data_object_list[0])):
+                    if ((z+1) in solution_matrix[i]):
+                        print(1, end="")
+                    else:
+                        print(0, end="")
+                print('\r')
+        return True 
+    else:
+        selected_column = choose_column(column_object_list)
+        cover_column(selected_column)
+        temp_row = selected_column.D
+        while (temp_row != selected_column):
+            solution_list[k] = temp_row
+            temp_column = temp_row.R
+            while(temp_column != temp_row):
+                cover_column(temp_column.C)
+                temp_column = temp_column.R
+            solution_found = search(k+1, data_object_list, column_object_list, solution_list)
+            if solution_found:
+                return solution_found
+            temp_row = solution_list[k]
+            selected_column = temp_row.C
+            temp_column = temp_row.L
+            while(temp_column != temp_row):
+                uncover_column(temp_column.C)
+                temp_column = temp_column.L
+            temp_row = temp_row.D
+        uncover_column(selected_column)
 
 def main():
     k = 0
-
-    data_object_list = []
-    column_object_list = []
-    solution_list = []
 
     matrix_A = [
         [0,0,1,0,1,1,0],
@@ -157,11 +183,16 @@ def main():
         [0,0,0,1,1,0,1]
     ]
 
+    data_object_list = []
+    column_object_list = []
+    solution_list = [None] * len(matrix_A)
+
     create_column_object_links(matrix_A, column_object_list)
     create_data_object_links(matrix_A, data_object_list, column_object_list)
     count_ones(matrix_A, column_object_list)
 
-    search(k, data_object_list, column_object_list, solution_list)
+    if not(search(k, data_object_list, column_object_list, solution_list)):
+        print ('No solution found')
 
 if __name__ == "__main__":
     main()
