@@ -1,9 +1,9 @@
-__author__ = 'Fadi Mhanna'
+import sys
 
+__author__ = 'Fadi Mhanna'
 
 #Represent each 1 in the matrix A as a data object x with five fields L[x], R[x], U[x], D[x], C[x]
 class data_object:
-
     #Create links as data_object type attributes
     def __init__(self, L=None, R=None, U=None, D=None, C=None):
         self.L = L
@@ -13,20 +13,14 @@ class data_object:
         self.C = C
 
 #Each column object y contains the fields L[y], R[y], U[y], D[y], and C[y] of a data object and two additional fields, S[y] (“size”) and N[y] (“name”)
-class column_object:
-
+class column_object (data_object):
     #Create links as column_object type attributes
-    def __init__(self, L=None, R=None, U=None, D=None, C=None, S=None, N=None):
-        self.L = L
-        self.R = R
-        self.U = U
-        self.D = D
-        self.C = C
+    def __init__(self, S=None, N=None):
+        data_object.__init__(self, L=None, R=None, U=None, D=None, C=None)
         self.S = S
         self.N = N
 
 def create_column_object_links(matrix_A, column_object_list):
-
     #Create special column object called root, h
     previous = root = column_object()
     column_object_list.append(root)
@@ -35,6 +29,7 @@ def create_column_object_links(matrix_A, column_object_list):
     for column in range(len(matrix_A[0])):
         current_column = column_object()
         column_object_list.append(current_column)
+        current_column.N = 'col ' + str(column + 1)
         current_column.L = previous
         previous.R = current_column
         previous = current_column
@@ -42,7 +37,6 @@ def create_column_object_links(matrix_A, column_object_list):
     root.L = current_column
 
 def create_data_object_links(matrix_A, data_object_list, column_object_list):
-    
     #Populate data_object_list matrix and create L and R links
     for row in range(len(matrix_A)):
         first_time_in_row = 1
@@ -58,6 +52,7 @@ def create_data_object_links(matrix_A, data_object_list, column_object_list):
                     temp_row.append(current)
                     previous.R = current
                     previous = current
+                previous.C = column_object_list[column+1]
             else:
                 temp_row.append(None)
         #Create wraparound links
@@ -90,19 +85,68 @@ def count_ones(matrix_A, column_object_list):
                 column_count += 1
                 column_object_list[column+1].S = column_count
 
+def choose_column(column_object_list):
+    temp_column = column_object_list[1]
+    s = sys.maxsize
+    while (temp_column != column_object_list[0]):
+        if(temp_column.S < s):
+            s = temp_column.S
+            return_column = temp_column
+        temp_column = temp_column.R
+    return return_column
 
 def cover_column(selected_column):
     selected_column.R.L = selected_column.L
-    temp_column = selected_column.D
-    while (temp_column != selected_column):
-        temp_row = temp_column.R
-        while(temp_row != temp_column):
-            None
+    selected_column.L.R = selected_column.R
+    temp_row = selected_column.D
+    while (temp_row != selected_column):
+        temp_column = temp_row.R
+        while(temp_column != temp_row):
+            temp_column.D.U = temp_column.U
+            temp_column.U.D = temp_column.D
+            temp_column.C.S = temp_column.C.S - 1
+            temp_column = temp_column.R
+        temp_row = temp_row.D
+
+def uncover_column(selected_column):
+    temp_row = selected_column.U
+    while(temp_row != selected_column):
+        temp_column = temp_row.L
+        while(temp_column != temp_row):
+            temp_column.C.S = temp_column.C.S + 1
+            temp_column.D.U = temp_column
+            temp_column.U.D = temp_column
+            temp_column = temp_column.L
+        temp_row = temp_row.U
+    selected_column.R.L = selected_column
+    selected_column.L.R = selected_column
+
+def search(k, data_object_list, column_object_list, solution_list):
+    selected_column = choose_column(column_object_list)
+    cover_column(selected_column)
+    temp_row = selected_column.D
+    while (temp_row != selected_column):
+        solution_list.append(temp_row)
+        temp_column = temp_row.R
+        while(temp_column != temp_row):
+            cover_column(temp_column.C)
+            temp_column = temp_column.R
+        search(k+1, data_object_list, column_object_list, solution_list)
+        temp_row = solution_list[k]
+        selected_column = temp_row.C
+        temp_column = temp_row.L
+        while(temp_column != temp_row):
+            uncover_column(temp_column)
+            temp_column = temp_column.L
+        temp_row = temp_row.D
+    uncover_column(selected_column)
 
 def main():
+    k = 0
 
     data_object_list = []
     column_object_list = []
+    solution_list = []
 
     matrix_A = [
         [0,0,1,0,1,1,0],
@@ -116,6 +160,8 @@ def main():
     create_column_object_links(matrix_A, column_object_list)
     create_data_object_links(matrix_A, data_object_list, column_object_list)
     count_ones(matrix_A, column_object_list)
+
+    search(k, data_object_list, column_object_list, solution_list)
 
 if __name__ == "__main__":
     main()
